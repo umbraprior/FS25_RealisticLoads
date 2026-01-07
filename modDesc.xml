@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="100">
+    <author>uprior</author>
+    <version>1.0.0.0</version>
+    
+    <title>
+        <en>Realistic Loads</en>
+        <de>Realitic Loads</de>
+    </title>
+    
+    <description>
+        <en><![CDATA[
+BETA
+]]></en>
+        <de><![CDATA[
+BETA
+]]></de>
+    </description>
+    
+    <multiplayer supported="true"/>
+    <iconFilename>icon_RealisticLoads.dds</iconFilename>
+    
+    <extraSourceFiles>
+        <!-- Load common utilities first -->
+        <sourceFile filename="src/RealisticLoadsCommon.lua"/>
+        
+        <!-- Load effects handler -->
+        <sourceFile filename="src/RealisticLoadsEffects.lua"/>
+        
+        <!-- Load wind and tilt loss systems -->
+        <sourceFile filename="src/RealisticLoadsWindLoss.lua"/>
+        
+        <!-- Load event files -->
+        <sourceFile filename="src/RealisticLoadsWindEvent.lua"/>
+        
+        <!-- Load registration last -->
+        <sourceFile filename="src/registerRealisticLoads.lua"/>
+    </extraSourceFiles>
+    
+    <realisticLoadsConfigurations 
+        debugMode="true"
+        enableTiltLoss="false"
+        enableWindLoss="true"
+        considerWindSpeed="true"
+        minBlowSpeed="20"
+        blowFactorGlobal="1.0"
+        enableParticles="true">
+        
+        <fillTypeConfigurations>
+            <!-- Example: <fillTypeConfiguration fillTypeName="MANURE" fillTypeExclude="true"/> -->
+        </fillTypeConfigurations>
+        
+        <vehicleTypeConfigurations>
+            <!-- Example: <vehicleTypeConfiguration fullVehicleName="DEUTZ-FAHR TopLiner 4090H" vehicleExclude="true"/> -->
+        </vehicleTypeConfigurations>
+    </realisticLoadsConfigurations>
+</modDesc>
+
