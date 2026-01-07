@@ -3,7 +3,7 @@ This script mod enhances the game by incentivizing the player to utilize the alr
 
 > [!WARNING]
 > This mod is currently in an experimental state, bugs and problems may occur. If you experience any issues please report them by making a post.
-> [here](https://github.com/umbraprior/FS25_RealisticLoads/issues)
+> [here](https://github.com/umbraprior/FS25_RealisticLoads/issues/new)
 
 ## [Status]
 - Wind loss is working and applicable to all fill types, currently cars with tipper configurations are not working(CV, Tigre, etc.). Particles need refinement for multiple fill units per vehicle, currently they all emit from the last fill unit.
@@ -25,7 +25,7 @@ This script mod enhances the game by incentivizing the player to utilize the alr
 
 #### [v1.0 Release Checklist]
 - [ ] verify performance optimization is functional(distance, activity)
-- [ ] verify that code is working is AI workers
+- [ ] verify that code is working with AI workers
 - [ ] verify that working vehicles/implements experience loss
 - [ ] verify liquids/slurry/milk/etc. does not experience loss
 - [ ] verify compatibility with modded vehicles, trailers, and fillTypes
