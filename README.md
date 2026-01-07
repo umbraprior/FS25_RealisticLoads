@@ -8,7 +8,7 @@ This script mod enhances the game by incentivizing the player to utilize the alr
 > [here](https://github.com/umbraprior/FS25_RealisticLoads/issues/new)
 
 ## [Status]
-- Wind loss is working and applicable to all fill types, currently cars with tipper configurations are not working(CV, Tigre, etc.). Particles need refinement for multiple fill units per vehicle, currently they all emit from the last fill unit.
+- Wind loss is working and applicable to all fill types, currently cars and rigid body trucks with tipper configurations are not working(CV, Tigre, etc.).
 - Tilt loss is not implemented at this time
 
 ## [Known Bugs]
