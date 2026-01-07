@@ -204,6 +204,12 @@ function RealisticLoadsEffects.createWindSmokeEmitter(vehicle, fillUnitIndex)
         end
         return nil;
     end
+	
+	-- Create a unique root node for this fillUnit's particle systems
+	local psRoot = createTransformGroup(string.format("RL_psRoot_%d", fillUnitIndex))
+	link(exactFillRootNode, psRoot)
+	setTranslation(psRoot, 0, 0, 0)
+	setRotation(psRoot, 0, 0, 0)
 
     -- Load smoke particle system references (cached) - both smoke and smoke_damping
     local sourceParticleSystems = RealisticLoadsEffects.loadSmokeParticleSystemReferences();
@@ -253,11 +259,18 @@ function RealisticLoadsEffects.createWindSmokeEmitter(vehicle, fillUnitIndex)
         end
         return nil;
     end
+	
+	-- Clone a unique emitter SHAPE for this fillUnit (must be a SHAPE, not a transform)
+	local mainEmitterShape = clone(sourceParticleSystems.smoke.emitterShape, false)
+	unlink(mainEmitterShape)
+	link(psRoot, mainEmitterShape)
+	setScale(mainEmitterShape, 1, 1, 1)
+	setVisibility(mainEmitterShape, true)
     
     -- Copy the main smoke particle system
     local particleSystem = nil;
     if ParticleUtil ~= nil and ParticleUtil.copyParticleSystem ~= nil then
-        particleSystem = ParticleUtil.copyParticleSystem(nil, nil, sourceParticleSystems.smoke, nil);
+        particleSystem = ParticleUtil.copyParticleSystem(nil, nil, sourceParticleSystems.smoke, mainEmitterShape)
         if particleSystem == nil then
             print(string.format("[RealisticLoads]: ERROR - Failed to copy main smoke particle system for fillUnit %d", fillUnitIndex));
             return nil;
@@ -269,54 +282,27 @@ function RealisticLoadsEffects.createWindSmokeEmitter(vehicle, fillUnitIndex)
 
     -- Copy the damping smoke particle system (if available)
     local dampingParticleSystem = nil;
-    if sourceParticleSystems.smoke_damping ~= nil and ParticleUtil ~= nil and ParticleUtil.copyParticleSystem ~= nil then
-        dampingParticleSystem = ParticleUtil.copyParticleSystem(nil, nil, sourceParticleSystems.smoke_damping, nil);
+	local dampEmitterShape = nil
+	
+    if sourceParticleSystems.smoke_damping ~= nil then
+		dampEmitterShape = clone(sourceParticleSystems.smoke_damping.emitterShape, false)
+		unlink(dampEmitterShape)
+		link(psRoot, dampEmitterShape)
+		setScale(dampEmitterShape, 1, 1, 1)
+		setVisibility(dampEmitterShape, true)
+		
+        dampingParticleSystem = ParticleUtil.copyParticleSystem(nil, nil, sourceParticleSystems.smoke_damping, dampEmitterShape);
         if dampingParticleSystem == nil then
             print(string.format("[RealisticLoads]: WARNING - Failed to copy damping smoke particle system for fillUnit %d (continuing without it)", fillUnitIndex));
         end
     end
 
-    -- Link the emitterShape to exactFillRootNode and position it
-    if particleSystem.emitterShape == nil then
-        print(string.format("[RealisticLoads]: ERROR - Particle system missing emitterShape for fillUnit %d", fillUnitIndex));
-        if ParticleUtil.deleteParticleSystem ~= nil then
-            ParticleUtil.deleteParticleSystem(particleSystem);
-        end
-        return nil;
-    end
-
-    -- Unlink from any previous parent before linking to the correct exactFillRootNode
-    -- This ensures each particle system stays at its own fill unit's location
-    -- CRITICAL: Each fill unit MUST have its own independent particle system
-    local previousParent = getParent(particleSystem.emitterShape);
-    if previousParent ~= nil and previousParent ~= 0 then
-        unlink(particleSystem.emitterShape);
-        if RealisticLoads.DEBUG_MODE then
-            print(string.format("[RealisticLoads]: Unlinked particle system emitterShape from previous parent for fillUnit %d", fillUnitIndex));
-        end
-    end
-    link(exactFillRootNode, particleSystem.emitterShape);
-    setVisibility(particleSystem.emitterShape, true);
-    
-    if RealisticLoads.DEBUG_MODE then
-        print(string.format("[RealisticLoads]: Linked particle system for fillUnit %d to exactFillRootNode %d", fillUnitIndex, exactFillRootNode));
-        print(string.format("[RealisticLoads]: Particle system emitterShape ID: %d, shape ID: %d, geometry ID: %d", 
-                particleSystem.emitterShape, particleSystem.shape or 0, particleSystem.geometry or 0));
-    end
-
-    -- Link damping particle system to same node if it exists
-    if dampingParticleSystem ~= nil and dampingParticleSystem.emitterShape ~= nil then
-        -- Unlink damping particle system from any previous parent
-        local dampingPreviousParent = getParent(dampingParticleSystem.emitterShape);
-        if dampingPreviousParent ~= nil and dampingPreviousParent ~= 0 then
-            unlink(dampingParticleSystem.emitterShape);
-            if RealisticLoads.DEBUG_MODE then
-                print(string.format("[RealisticLoads]: Unlinked damping particle system emitterShape from previous parent for fillUnit %d", fillUnitIndex));
-            end
-        end
-        link(exactFillRootNode, dampingParticleSystem.emitterShape);
-        setVisibility(dampingParticleSystem.emitterShape, true);
-    end
+	print(string.format(
+	  "[RL EMITTER] fillUnit=%d mainEmitter=%s parent=%s",
+	  fillUnitIndex,
+	  tostring(mainEmitterShape),
+	  tostring(getParent(mainEmitterShape))
+	))
 
     -- Diagnostic: Log particle system structure
     if RealisticLoads.DEBUG_MODE then
@@ -452,10 +438,11 @@ function RealisticLoadsEffects.createWindSmokeEmitter(vehicle, fillUnitIndex)
 
     return {
         particleSystem = particleSystem,
-        dampingParticleSystem = dampingParticleSystem,  -- May be nil if smoke_damping not available
-        emitterShape = particleSystem.emitterShape,
-        exactFillRootNode = exactFillRootNode,
-        fillTypeId = fillUnitFillType  -- Store fill type used at creation (for detecting changes)
+        dampingParticleSystem = dampingParticleSystem,
+		psRoot = psRoot,
+		mainEmitterShape = mainEmitterShape,
+		dampEmitterShape = dampEmitterShape,
+        fillTypeId = fillUnitFillType
     };
 end
 
@@ -500,55 +487,65 @@ function RealisticLoadsEffects.cleanupParticleSystem(fillUnitIndex, customEmitte
     end
     
     -- Delete emitter shape
-    if customEmitter.emitterShape ~= nil then
-        delete(customEmitter.emitterShape);
-        print(string.format("[RealisticLoads]: Deleted emitter shape (fillUnit %d)", fillUnitIndex));
-    end
+	if customEmitter.mainEmitterShape ~= nil then
+		delete(customEmitter.mainEmitterShape)
+	end
+	if customEmitter.dampEmitterShape ~= nil then
+		delete(customEmitter.dampEmitterShape)
+	end
+	if customEmitter.psRoot ~= nil then
+		delete(customEmitter.psRoot)
+	end
 end
 
--- Set particle system emission state and scale
 function RealisticLoadsEffects.setParticleEmission(customEmitter, blowRate, fillUnitIndex)
     if customEmitter == nil or customEmitter.particleSystem == nil then
-        return;
+        return
     end
-    
-    local particleSystem = customEmitter.particleSystem;
-    local dampingParticleSystem = customEmitter.dampingParticleSystem;
-    
+
+    local ps = customEmitter.particleSystem
+    local damp = customEmitter.dampingParticleSystem
+
+    -- Optional debug (leave in while testing)
+	print(string.format("[RL setParticleEmission] fillUnit=%d blowRate=%.6f emitScaleFn=%s emitStateFn=%s",
+		fillUnitIndex, blowRate or -1,
+		tostring(ParticleUtil and ParticleUtil.setEmitCountScale),
+		tostring(ParticleUtil and ParticleUtil.setEmittingState)
+	))
+
     if blowRate > 0 then
-        -- Set emission scale based on blow rate (scale 0-2.0 for visibility)
-        local emissionScale = math.min(blowRate * 500.0, 2.0);  -- Scale blowRate to 0-2.0 range
-        if ParticleUtil ~= nil and ParticleUtil.setEmitCountScale ~= nil then
-            ParticleUtil.setEmitCountScale(particleSystem, emissionScale);
-            if ParticleUtil.setEmittingState ~= nil then
-                ParticleUtil.setEmittingState(particleSystem, true);
+        local emissionScale = math.min(blowRate * 500.0, 2.0)
+
+        if ParticleUtil ~= nil then
+            -- Set scale if supported
+            if ParticleUtil.setEmitCountScale ~= nil then
+                ParticleUtil.setEmitCountScale(ps, emissionScale)
+                if damp ~= nil then
+                    ParticleUtil.setEmitCountScale(damp, emissionScale)
+                end
             end
-            
-            -- Also control damping particle system if it exists
-            if dampingParticleSystem ~= nil then
-                ParticleUtil.setEmitCountScale(dampingParticleSystem, emissionScale);
-                if ParticleUtil.setEmittingState ~= nil then
-                    ParticleUtil.setEmittingState(dampingParticleSystem, true);
+
+            -- ALWAYS enable emission if supported
+            if ParticleUtil.setEmittingState ~= nil then
+                ParticleUtil.setEmittingState(ps, true)
+                if damp ~= nil then
+                    ParticleUtil.setEmittingState(damp, true)
                 end
             end
         end
     else
-        -- Disable emission for both particle systems
         if ParticleUtil ~= nil then
             if ParticleUtil.setEmitCountScale ~= nil then
-                ParticleUtil.setEmitCountScale(particleSystem, 0);
-            end
-            if ParticleUtil.setEmittingState ~= nil then
-                ParticleUtil.setEmittingState(particleSystem, false);
-            end
-            
-            -- Also disable damping particle system if it exists
-            if dampingParticleSystem ~= nil then
-                if ParticleUtil.setEmitCountScale ~= nil then
-                    ParticleUtil.setEmitCountScale(dampingParticleSystem, 0);
+                ParticleUtil.setEmitCountScale(ps, 0)
+                if damp ~= nil then
+                    ParticleUtil.setEmitCountScale(damp, 0)
                 end
-                if ParticleUtil.setEmittingState ~= nil then
-                    ParticleUtil.setEmittingState(dampingParticleSystem, false);
+            end
+
+            if ParticleUtil.setEmittingState ~= nil then
+                ParticleUtil.setEmittingState(ps, false)
+                if damp ~= nil then
+                    ParticleUtil.setEmittingState(damp, false)
                 end
             end
         end
