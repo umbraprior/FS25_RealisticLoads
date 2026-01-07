@@ -12,17 +12,18 @@ This script mod enhances the game by incentivizing the player to utilize the alr
 - Tilt loss is not implemented at this time
 
 ## [Known Bugs]
-1. Fix particles emit for fillUnit > 1 per vehicle (they all share the last loaded shape node)
-2. Fix for cars/trucks that have configurations with fillUnit
-3. Investigate bug with changing systems where particles stop emitting
-4. Investigate bug with cleaning up particle effects when active and player/AI gets too far from the source causing them to not reappear when returning in view
-5. Investigate crash with a large amount of active windloss and particles
+1. ~~Fix particles emit for fillUnit > 1 per vehicle (they all share the last loaded shape node)~~
+2. cars/trucks that have configurations with fillUnit don't have loss or effects
+3. changing systems stop emitting(may be related to #6)
+4. when cleaning up particle effects when active and player/AI gets too far from the source causing them to not reappear when returning in view
+5. crash with a large amount of active windloss and particles
+6. user/worker needing to have active selection on trailer/implement when driving vehicle for windloss to occur
 
 ### [TODO]
 - [ ] Implement tilt loss
 - [ ] Implement tilt loss effects
-  - initial findings suggest that it's impossible to use the grain effect seen with tipping trailers(uses a hardcoded effect in the vehicle i3d)
-  -  most likely case is just spawning a big smoke particle when loss is experienced
+  - initial findings suggest that it's impossible to use the grain effect seen with tipping trailers/buckets(uses a hardcoded model in the vehicle i3d)
+  - most likely solution is spawning a big smoke particle on heap when loss is experienced(performance concerns)
 - [ ] Config menu
 
 #### [v1.0 Release Checklist]
