@@ -182,7 +182,7 @@ function RealisticLoadsWindLoss.checkFillTypeChange(vehicle, spec, fillUnitIndex
         return false; -- No emitter exists, need to create one
     end
     
-    Only check fill type change on fill level transitions
+    -- Only check fill type change on fill level transitions
     local lastFillLevel = spec.lastFillLevel[fillUnitIndex] or 0;
     local fillLevelThreshold = 0.01; -- 1% threshold
     
