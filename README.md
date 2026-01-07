@@ -1,3 +1,5 @@
+![mod-icon](icon_RealisticLoads.png)
+
 # Realistic Loads
 This script mod enhances the game by incentivizing the player to utilize the already in-game mechanics for trailered items. Loose goods and crops, like wheat or hay, will fall out of trailers when moving too quickly or tipped over unless covered. The current weather, speed, and mass of the goods can change the rate at which you lose your stuff. Be careful though, if the trailer tips over at too much of an angle or the weather gets too severe then the cover may break!
 
